@@ -68,17 +68,17 @@ def class_summary(students):
             total_passed += result["passed"]
             total_unpassed += result["unpassed"]
             total_unacceptable_scores += result["unacceptable_scores"]
-            print(
-                f"""
-            name = {name}
-            Minimum score = {result["minimum_score"]}
-            Maximum score = {result["maximum_score"]}
-            Average of scores = {result["average_score"]:.2f}
-            passed : {result["passed"]}
-            unpassed : {result["unpassed"]}
-            pass rate = {result["pass_rate"]:.2f}%
-            unacceptable scores : {result["unacceptable_scores"]}"""
-            )
+            # print(
+            #     f"""
+            # name = {name}
+            # Minimum score = {result["minimum_score"]}
+            # Maximum score = {result["maximum_score"]}
+            # Average of scores = {result["average_score"]:.2f}
+            # passed : {result["passed"]}
+            # unpassed : {result["unpassed"]}
+            # pass rate = {result["pass_rate"]:.2f}%
+            # unacceptable scores : {result["unacceptable_scores"]}"""
+            # )
 
     total_valid_scores = total_passed + total_unpassed
 
@@ -120,3 +120,22 @@ print(f"""
             total unpassed : {summary["total_unpassed"]}
             total_unacceptable_scores : {summary["total_unacceptable_scores"]}
     """)
+
+
+def sort_students_by_average(students):
+    sorted_students = {}
+    for name, scores in students.items():
+        averages = analyze_scores(scores)
+        if averages is not None:
+            sorted_students[name] = averages["average_score"]
+
+    sort_orders = sorted(sorted_students.items(),
+                         key=lambda x: x[1], reverse=True)
+    return sort_orders
+
+
+sorted_students = sort_students_by_average(students)
+
+
+for counter, (name, average) in enumerate(sorted_students, start=1):
+    print(f"{counter}. {name} : {average:.2f}")
