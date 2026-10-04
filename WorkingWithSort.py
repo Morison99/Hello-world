@@ -22,19 +22,6 @@ student_ranking = [
     ("Mehdi", 14),
     ("Hadi", 14)
 ]
-# counter = 0
-# pre_value = None
-# rank = 1
-# for key, value in student_ranking:
-
-#     if value != pre_value:
-#         print(f"{rank}. {key} : {value}")
-#         counter = 0
-#     else:
-#         print(f"{rank - counter}. {key} : {value}")
-#     rank += 1
-#     counter += 1
-#     pre_value = value
 
 counter = 1
 rank = 1

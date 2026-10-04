@@ -2,7 +2,7 @@ def analyze_scores(scores):
     valid_scores = [score for score in scores if 0 <= score <= 20]
 
     if not valid_scores:
-        return None
+        return {"total_valid_scores": 0, "unacceptable_scores": len(scores)}
 
     average = sum(valid_scores)/len(valid_scores)
     maximum = max(valid_scores)
@@ -20,8 +20,23 @@ def analyze_scores(scores):
         "total_passed": passed,
         "total_unpassed": unpassed,
         "pass_rate": pass_rate,
-        "unacceptable_scores": unacceptable_scores
+        "unacceptable_scores": unacceptable_scores,
+        "total_valid_scores": valid_count
     }
+
+
+def find_max(current_value, current_name, new_value, new_name):
+    if current_value is None or current_value < new_value:
+        current_value = new_value
+        current_name = new_name
+    return current_value, current_name
+
+
+def find_min(current_value, current_name, new_value, new_name):
+    if current_value is None or current_value > new_value:
+        current_value = new_value
+        current_name = new_name
+    return current_value, current_name
 
 
 def class_summary(students):
@@ -29,36 +44,56 @@ def class_summary(students):
     worst_student = None
     student_with_highest_score = None
     student_with_lowest_score = None
-    best_average = -1
-    worst_average = 21
-    maximum = -1
-    minimum = 21
+    best_average = None
+    worst_average = None
+    maximum = None
+    minimum = None
     total_passed = 0
     total_unpassed = 0
     total_unacceptable_scores = 0
     sort_by_average = {}
+    students_without_scores = []
     for name, scores in students.items():
         result = analyze_scores(scores)
-        if result is None:
-            print("No Scores Available")
+        total_unacceptable_scores += result["unacceptable_scores"]
+        if result["total_valid_scores"] == 0:
+            students_without_scores.append(name)
         else:
             sort_by_average[name] = result["average_score"]
-            if best_average < result["average_score"]:
-                best_average = result["average_score"]
-                best_student = name
-            if worst_average > result["average_score"]:
-                worst_average = result["average_score"]
-                worst_student = name
-            if maximum < result["maximum_score"]:
-                maximum = result["maximum_score"]
-                student_with_highest_score = name
-            if minimum > result["minimum_score"]:
-                minimum = result["minimum_score"]
-                student_with_lowest_score = name
+            best_average, best_student = find_max(
+                best_average,
+                best_student,
+                result["average_score"],
+                name
+            )
+            worst_average, worst_student = find_min(
+                worst_average,
+                worst_student,
+                result["average_score"],
+                name
+            )
+            maximum, student_with_highest_score = find_max(
+                maximum,
+                student_with_highest_score,
+                result["maximum_score"],
+                name
+            )
+
+            minimum, student_with_lowest_score = find_min(
+                minimum,
+                student_with_lowest_score,
+                result["minimum_score"],
+                name
+            )
             total_passed += result["total_passed"]
             total_unpassed += result["total_unpassed"]
-            total_unacceptable_scores += result["unacceptable_scores"]
 
+    total_valid_scores = total_passed + total_unpassed
+    if total_valid_scores == 0:
+        return {
+            "total_valid_scores": 0,
+            "students_without_scores": students_without_scores
+        }
     student_ranking = sorted(sort_by_average.items(),
                              key=lambda x: x[1], reverse=True)
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -71,15 +106,13 @@ def class_summary(students):
 
         if value != pre_value:
             rank = counter
+            counter += 1
         ranking.append((rank, key, value))
-        counter += 1
+
         pre_value = value
 
     # ==========================================================
-    total_valid_scores = total_passed + total_unpassed
 
-    if total_valid_scores == 0:
-        return None
     overall_pass_rate = total_passed / total_valid_scores * 100
     return {"best_student": best_student, "best_average": best_average,
             "worst_student": worst_student, "worst_average": worst_average,
@@ -89,17 +122,59 @@ def class_summary(students):
             "total_unacceptable_scores": total_unacceptable_scores,
             "total_valid_scores": total_valid_scores,
             "overall_pass_rate": overall_pass_rate,
-            "student_ranking": ranking
+            "student_ranking": ranking, "students_without_scores": students_without_scores
             }
 
 
-students = {
-    "Ali": [18, 18],
-    "Reza": [16, 20],
-    "Sara": [15, 15]
-}
+def print_summary(summary):
+
+    print("===== Class Summary =====")
+    print()
+    print("Ranking:")
+
+    if summary["total_valid_scores"]:
+        for rank, name, average in summary["student_ranking"]:
+            print(f"{rank}. {name}: {average:.2f}")
+        print(summary["students_without_scores"])
+        print(f"""
+Best student: {summary["best_student"]}
+Best average: {summary["best_average"]:.2f}
+
+Worst student: {summary["worst_student"]}
+Worst average: {summary["worst_average"]:.2f}
+
+Highest score: {summary["highest_score"]}
+Student with highest score: {summary["student_with_highest_score"]}
+
+Lowest score: {summary["lowest_score"]}
+Student with lowest score: {summary["student_with_lowest_score"]}
+
+Passed: {summary["total_passed"]}
+Unpassed: {summary["total_unpassed"]}
+Pass rate: {summary["overall_pass_rate"]:.2f}%
+Unacceptable scores: {summary["total_unacceptable_scores"]}
+    """)
+    else:
+        print("No valid scores found.")
+        print("Students without valid scores:",
+              summary["students_without_scores"])
+
+
+students = {}
+while True:
+    name = input("Enter student name: ")
+    if name.lower() == "done":
+        break
+    str_scores = input("Enter student scores: ")
+
+    scores = []
+
+    for i in str_scores.split():
+        try:
+            scores.append(float(i))
+        except ValueError:
+            print(f"Invalid input ignored: {i}")
+    students[name] = scores
 
 summary = class_summary(students)
-# for counter, (name, average) in enumerate(summary["student_ranking"], start=1):
-#     print(f"{counter} . {name} : {average}")
-print(summary["student_ranking"])
+print_summary(summary)
